@@ -85,6 +85,7 @@ public class KeyHandler implements DeviceKeyHandler {
     private final NotificationManager mNotificationManager;
     private Context mGestureContext = null;
     private EventHandler mEventHandler;
+    private Handler mHandler;
     private SensorManager mSensorManager;
     private Sensor mProximitySensor;
     private Vibrator mVibrator;
@@ -95,6 +96,7 @@ public class KeyHandler implements DeviceKeyHandler {
         mEventHandler = new EventHandler();
         mPowerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        mHandler = new Handler();
         mNotificationManager
                 = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
@@ -157,24 +159,66 @@ public class KeyHandler implements DeviceKeyHandler {
                         doHapticFeedback();
                 break;
             case MODE_TOTAL_SILENCE:
-                setZenMode(Settings.Global.ZEN_MODE_NO_INTERRUPTIONS);
+            	Log.d(TAG, "MODE_TOTAL_SILENCE");
+            	mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                     setZenMode(Settings.Global.ZEN_MODE_NO_INTERRUPTIONS); 
+                     Log.d(TAG, "MODE_TOTAL_SILENCE handler executed");  
+                    }
+                });
                 break;
             case MODE_ALARMS_ONLY:
-                setZenMode(Settings.Global.ZEN_MODE_ALARMS);
+				Log.d(TAG, "MODE_ALARMS_ONLY");
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                     setZenMode(Settings.Global.ZEN_MODE_ALARMS); 
+                     Log.d(TAG, "MODE_ALARMS_ONLY handler executed");  
+                    }
+                });
                 break;
             case MODE_PRIORITY_ONLY:
-                setZenMode(Settings.Global.ZEN_MODE_IMPORTANT_INTERRUPTIONS);
-                setRingerModeInternal(AudioManager.RINGER_MODE_NORMAL);
+            	Log.d(TAG, "MODE_PRIORITY_ONLY");
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+						setZenMode(Settings.Global.ZEN_MODE_IMPORTANT_INTERRUPTIONS);
+						setRingerModeInternal(AudioManager.RINGER_MODE_NORMAL);
+                     Log.d(TAG, "MODE_PRIORITY_ONLY handler executed");  
+                    }
+                });
                 break;
             case MODE_NONE:
-                setZenMode(Settings.Global.ZEN_MODE_OFF);
-                setRingerModeInternal(AudioManager.RINGER_MODE_NORMAL);
+				Log.d(TAG, "MODE_NONE");
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+						setZenMode(Settings.Global.ZEN_MODE_OFF);
+						setRingerModeInternal(AudioManager.RINGER_MODE_NORMAL);
+                     Log.d(TAG, "MODE_NONE handler executed");  
+                    }
+                });
                 break;
             case MODE_VIBRATE:
-                setRingerModeInternal(AudioManager.RINGER_MODE_VIBRATE);
+				Log.d(TAG, "MODE_VIBRATE");
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+						setRingerModeInternal(AudioManager.RINGER_MODE_VIBRATE);
+                     Log.d(TAG, "MODE_VIBRATE handler executed");  
+                    }
+                });
                 break;
             case MODE_RING:
-                setRingerModeInternal(AudioManager.RINGER_MODE_NORMAL);
+				Log.d(TAG, "MODE_RING");
+				mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+						setRingerModeInternal(AudioManager.RINGER_MODE_NORMAL);
+                     Log.d(TAG, "MODE_RING handler executed");  
+                    }
+                });
                 break;
             }
 
@@ -217,6 +261,7 @@ public class KeyHandler implements DeviceKeyHandler {
     }
 
     public boolean handleKeyEvent(KeyEvent event) {
+		Log.d(TAG, "KeyEvent: " + event);
         if (event.getAction() != KeyEvent.ACTION_UP) {
             return false;
         }
@@ -225,9 +270,11 @@ public class KeyHandler implements DeviceKeyHandler {
         if (isKeySupported && !mEventHandler.hasMessages(GESTURE_REQUEST)) {
             Message msg = getMessageForKeyEvent(event);
             if (scanCode < MODE_TOTAL_SILENCE && mProximitySensor != null) {
+				Log.d(TAG, "Handling Key Event: " + event + " with a delay");
                 mEventHandler.sendMessageDelayed(msg, 200);
                 processEvent(event);
             } else {
+				Log.d(TAG, "Handling Key Event: " + event);
                 mEventHandler.sendMessage(msg);
             }
         }
