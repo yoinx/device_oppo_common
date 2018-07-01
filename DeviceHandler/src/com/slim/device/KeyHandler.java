@@ -270,11 +270,11 @@ public class KeyHandler implements DeviceKeyHandler {
         if (isKeySupported && !mEventHandler.hasMessages(GESTURE_REQUEST)) {
             Message msg = getMessageForKeyEvent(event);
             if (scanCode < MODE_TOTAL_SILENCE && mProximitySensor != null) {
-				Log.d(TAG, "Handling Key Event: " + event + " with a delay");
+				Log.d(TAG, "Handling Key with scanCode: " + scanCode + " Event: " + event + " with a delay");
                 mEventHandler.sendMessageDelayed(msg, 200);
                 processEvent(event);
             } else {
-				Log.d(TAG, "Handling Key Event: " + event);
+				Log.d(TAG, "Handling Key with scanCode: " + scanCode + " Event: " + event);
                 mEventHandler.sendMessage(msg);
             }
         }
