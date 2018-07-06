@@ -34,17 +34,19 @@ import android.os.Vibrator;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.KeyEvent;
+import com.slim.device.R;
 
 import android.service.notification.ZenModeConfig;
 
 import com.slim.device.settings.ScreenOffGesture;
+import com.slim.device.util.SliderUtils;
 
 import com.android.internal.os.DeviceKeyHandler;
 import com.android.internal.util.ArrayUtils;
 import com.android.internal.util.aospextended.ActionConstants;
 import com.android.internal.util.aospextended.Action;
 
-public class KeyHandler implements DeviceKeyHandler {
+public class KeyHandler extends Activity implements DeviceKeyHandler {
 
     private static final String TAG = KeyHandler.class.getSimpleName();
     private static final int GESTURE_REQUEST = 1;
@@ -56,13 +58,6 @@ public class KeyHandler implements DeviceKeyHandler {
     private static final int GESTURE_LTR_SCANCODE = 253;
     private static final int GESTURE_GTR_SCANCODE = 254;
     private static final int GESTURE_V_UP_SCANCODE = 255;
-    // Slider
-    private static final int MODE_TOTAL_SILENCE = 600;
-    private static final int MODE_ALARMS_ONLY = 601;
-    private static final int MODE_PRIORITY_ONLY = 602;
-    private static final int MODE_NONE = 603;
-    private static final int MODE_VIBRATE = 604;
-    private static final int MODE_RING = 605;
 
     private static final int[] sSupportedGestures = new int[]{
         GESTURE_CIRCLE_SCANCODE,
@@ -71,12 +66,9 @@ public class KeyHandler implements DeviceKeyHandler {
         GESTURE_V_UP_SCANCODE,
         GESTURE_LTR_SCANCODE,
         GESTURE_GTR_SCANCODE,
-        MODE_TOTAL_SILENCE,
-        MODE_ALARMS_ONLY,
-        MODE_PRIORITY_ONLY,
-        MODE_NONE,
-        MODE_VIBRATE,
-        MODE_RING
+        SliderUtils.SLIDER_TOP,
+        SliderUtils.SLIDER_MIDDLE,
+        SliderUtils.SLIDER_BOTTOM
     };
 
     private final Context mContext;
@@ -85,6 +77,7 @@ public class KeyHandler implements DeviceKeyHandler {
     private final NotificationManager mNotificationManager;
     private Context mGestureContext = null;
     private EventHandler mEventHandler;
+    private Handler mHandler;
     private SensorManager mSensorManager;
     private Sensor mProximitySensor;
     private Vibrator mVibrator;
@@ -95,6 +88,7 @@ public class KeyHandler implements DeviceKeyHandler {
         mEventHandler = new EventHandler();
         mPowerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        mHandler = new Handler();
         mNotificationManager
                 = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
@@ -112,6 +106,7 @@ public class KeyHandler implements DeviceKeyHandler {
                     "com.slim.device", Context.CONTEXT_IGNORE_SECURITY);
         } catch (NameNotFoundException e) {
         }
+
     }
 
     private class EventHandler extends Handler {
@@ -120,64 +115,43 @@ public class KeyHandler implements DeviceKeyHandler {
             KeyEvent event = (KeyEvent) msg.obj;
             String action = null;
             switch(event.getScanCode()) {
-            case GESTURE_CIRCLE_SCANCODE:
-                action = getGestureSharedPreferences()
-                        .getString(ScreenOffGesture.PREF_GESTURE_CIRCLE,
-                        ActionConstants.ACTION_CAMERA);
-                        doHapticFeedback();
-                break;
-            case GESTURE_SWIPE_DOWN_SCANCODE:
-                action = getGestureSharedPreferences()
-                        .getString(ScreenOffGesture.PREF_GESTURE_DOUBLE_SWIPE,
-                        ActionConstants.ACTION_MEDIA_PLAY_PAUSE);
-                        doHapticFeedback();
-                break;
-            case GESTURE_V_SCANCODE:
-                action = getGestureSharedPreferences()
-                        .getString(ScreenOffGesture.PREF_GESTURE_ARROW_DOWN,
-                        ActionConstants.ACTION_VIB_SILENT);
-                        doHapticFeedback();
-                break;
-            case GESTURE_V_UP_SCANCODE:
-                action = getGestureSharedPreferences()
-                        .getString(ScreenOffGesture.PREF_GESTURE_ARROW_UP,
-                        ActionConstants.ACTION_TORCH);
-                        doHapticFeedback();
-                break;
-            case GESTURE_LTR_SCANCODE:
-                action = getGestureSharedPreferences()
-                        .getString(ScreenOffGesture.PREF_GESTURE_ARROW_LEFT,
-                        ActionConstants.ACTION_MEDIA_PREVIOUS);
-                        doHapticFeedback();
-                break;
-            case GESTURE_GTR_SCANCODE:
-                action = getGestureSharedPreferences()
-                        .getString(ScreenOffGesture.PREF_GESTURE_ARROW_RIGHT,
-                        ActionConstants.ACTION_MEDIA_NEXT);
-                        doHapticFeedback();
-                break;
-            case MODE_TOTAL_SILENCE:
-                setZenMode(Settings.Global.ZEN_MODE_NO_INTERRUPTIONS);
-                break;
-            case MODE_ALARMS_ONLY:
-                setZenMode(Settings.Global.ZEN_MODE_ALARMS);
-                break;
-            case MODE_PRIORITY_ONLY:
-                setZenMode(Settings.Global.ZEN_MODE_IMPORTANT_INTERRUPTIONS);
-                setRingerModeInternal(AudioManager.RINGER_MODE_NORMAL);
-                break;
-            case MODE_NONE:
-                setZenMode(Settings.Global.ZEN_MODE_OFF);
-                setRingerModeInternal(AudioManager.RINGER_MODE_NORMAL);
-                break;
-            case MODE_VIBRATE:
-                setRingerModeInternal(AudioManager.RINGER_MODE_VIBRATE);
-                break;
-            case MODE_RING:
-                setRingerModeInternal(AudioManager.RINGER_MODE_NORMAL);
-                break;
+                case GESTURE_CIRCLE_SCANCODE:
+                    action = getGestureSharedPreferences()
+                            .getString(ScreenOffGesture.PREF_GESTURE_CIRCLE,
+                                    ActionConstants.ACTION_CAMERA);
+                    doHapticFeedback();
+                    break;
+                case GESTURE_SWIPE_DOWN_SCANCODE:
+                    action = getGestureSharedPreferences()
+                            .getString(ScreenOffGesture.PREF_GESTURE_DOUBLE_SWIPE,
+                                    ActionConstants.ACTION_MEDIA_PLAY_PAUSE);
+                    doHapticFeedback();
+                    break;
+                case GESTURE_V_SCANCODE:
+                    action = getGestureSharedPreferences()
+                            .getString(ScreenOffGesture.PREF_GESTURE_ARROW_DOWN,
+                                    ActionConstants.ACTION_VIB_SILENT);
+                    doHapticFeedback();
+                    break;
+                case GESTURE_V_UP_SCANCODE:
+                    action = getGestureSharedPreferences()
+                            .getString(ScreenOffGesture.PREF_GESTURE_ARROW_UP,
+                                    ActionConstants.ACTION_TORCH);
+                    doHapticFeedback();
+                    break;
+                case GESTURE_LTR_SCANCODE:
+                    action = getGestureSharedPreferences()
+                            .getString(ScreenOffGesture.PREF_GESTURE_ARROW_LEFT,
+                                    ActionConstants.ACTION_MEDIA_PREVIOUS);
+                    doHapticFeedback();
+                    break;
+                case GESTURE_GTR_SCANCODE:
+                    action = getGestureSharedPreferences()
+                            .getString(ScreenOffGesture.PREF_GESTURE_ARROW_RIGHT,
+                                    ActionConstants.ACTION_MEDIA_NEXT);
+                    doHapticFeedback();
+                    break;
             }
-
             if (action == null || action != null && action.equals(ActionConstants.ACTION_NULL)) {
                 return;
             }
@@ -217,6 +191,7 @@ public class KeyHandler implements DeviceKeyHandler {
     }
 
     public boolean handleKeyEvent(KeyEvent event) {
+		Log.d(TAG, "KeyEvent: " + event);
         if (event.getAction() != KeyEvent.ACTION_UP) {
             return false;
         }
@@ -224,11 +199,18 @@ public class KeyHandler implements DeviceKeyHandler {
         boolean isKeySupported = ArrayUtils.contains(sSupportedGestures, scanCode);
         if (isKeySupported && !mEventHandler.hasMessages(GESTURE_REQUEST)) {
             Message msg = getMessageForKeyEvent(event);
-            if (scanCode < MODE_TOTAL_SILENCE && mProximitySensor != null) {
-                mEventHandler.sendMessageDelayed(msg, 200);
-                processEvent(event);
+            if (scanCode < SliderUtils.SLIDER_TOP) {
+                if (mProximitySensor != null) {
+                    Log.d(TAG, "Handling Gesture event. Event: " + event + " Message: " + msg + " with a delay");
+                    mEventHandler.sendMessageDelayed(msg, 200);
+                    processEvent(event);
+                } else {
+                    Log.d(TAG, "Handling Gesture event. Event: " + event + " Message: " + msg);
+                    mEventHandler.sendMessage(msg);
+                }
             } else {
-                mEventHandler.sendMessage(msg);
+				Log.d(TAG, "Handling Slider event.  Event: " + event + " Message: " + msg);
+                processSliderEvent(scanCode);
             }
         }
         return isKeySupported;
@@ -265,4 +247,30 @@ public class KeyHandler implements DeviceKeyHandler {
         }, mProximitySensor, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
+    private void processSliderEvent(int scancode) {
+        String action = SliderUtils.getSliderAction(scancode);
+        Log.d(TAG, "processSliderEvent for scancode: " + scancode);
+
+        if (action.equals(SliderUtils.mode_total_silence)) {
+            Log.d(TAG, "processSliderEvent Scancode: " + scancode + " with action: " + SliderUtils.mode_total_silence);
+            setZenMode(Settings.Global.ZEN_MODE_NO_INTERRUPTIONS);
+        } else if (action.equals(SliderUtils.mode_alarms_only)) {
+            Log.d(TAG, "processSliderEvent Scancode: " + scancode + " with action: " + SliderUtils.mode_alarms_only);
+            setZenMode(Settings.Global.ZEN_MODE_ALARMS);
+        } else if (action.equals(SliderUtils.mode_priority_only)) {
+            Log.d(TAG, "processSliderEvent Scancode: " + scancode + " with action: " +  SliderUtils.mode_priority_only);
+            setZenMode(Settings.Global.ZEN_MODE_IMPORTANT_INTERRUPTIONS);
+            setRingerModeInternal(AudioManager.RINGER_MODE_NORMAL);
+        } else if (action.equals(SliderUtils.mode_all_notifications)) {
+            Log.d(TAG, "processSliderEvent Scancode: " + scancode + " with action: " + SliderUtils.mode_all_notifications);
+            setZenMode(Settings.Global.ZEN_MODE_OFF);
+            setRingerModeInternal(AudioManager.RINGER_MODE_NORMAL);
+        } else if (action.equals(SliderUtils.mode_vibrate)) {
+            Log.d(TAG, "processSliderEvent Scancode: " + scancode + " with action: " + SliderUtils.mode_vibrate);
+            setRingerModeInternal(AudioManager.RINGER_MODE_VIBRATE);
+        } else if (action.equals(SliderUtils.mode_ring)) {
+            Log.d(TAG, "processSliderEvent Scancode: " + scancode + " with action: " + SliderUtils.mode_ring);
+            setRingerModeInternal(AudioManager.RINGER_MODE_NORMAL);
+        }
+    }
 }

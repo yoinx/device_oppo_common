@@ -28,11 +28,14 @@ import com.slim.device.KernelControl;
 import com.slim.device.settings.ScreenOffGesture;
 import com.slim.device.settings.SliderSettings;
 import com.slim.device.util.FileUtils;
+import com.slim.device.util.SliderUtils;
+import com.slim.device.KeyHandler;
 
 import java.io.File;
 
 
 public class BootReceiver extends BroadcastReceiver {
+
     @Override
     public void onReceive(final Context context, final Intent intent) {
         if (intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
@@ -50,13 +53,13 @@ public class BootReceiver extends BroadcastReceiver {
             } else {
                 enableComponent(context, SliderSettings.class.getName());
 
-                String sliderTop = getPreferenceString(context, "keycode_top_position", "601");
-                String sliderMiddle = getPreferenceString(context, "keycode_middle_position", "602");
-                String sliderBottom = getPreferenceString(context, "keycode_bottom_position", "603");
+                String sliderTop = getPreferenceString(context, "keycode_top_position", context.getString(R.string.mode_alarms_only));
+                String sliderMiddle = getPreferenceString(context, "keycode_middle_position", context.getString(R.string.mode_priority_only));
+                String sliderBottom = getPreferenceString(context, "keycode_bottom_position", context.getString(R.string.mode_all_notifications));
 
-                FileUtils.writeLine(KernelControl.KEYCODE_SLIDER_TOP, sliderTop);
-                FileUtils.writeLine(KernelControl.KEYCODE_SLIDER_MIDDLE, sliderMiddle);
-                FileUtils.writeLine(KernelControl.KEYCODE_SLIDER_BOTTOM, sliderBottom);
+                SliderUtils.setSliderAction(SliderUtils.SLIDER_TOP, sliderTop);
+                SliderUtils.setSliderAction(SliderUtils.SLIDER_MIDDLE, sliderMiddle);
+                SliderUtils.setSliderAction(SliderUtils.SLIDER_BOTTOM, sliderBottom);
             }
     }
 

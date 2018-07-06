@@ -54,4 +54,12 @@
     <string name="button_swap_title">Swap buttons</string>
     <string name="button_swap_summary">Swap the order of recents and back buttons</string>
 
+    <!-- Slider control strings -  These must match in KeyHandler.java-->
+    <string name="mode_total_silence" translatable="false">MODE_TOTAL_SILENCE</string>
+    <string name="mode_alarms_only" translatable="false">MODE_ALARMS_ONLY</string>
+    <string name="mode_priority_only" translatable="false">MODE_PRIORITY_ONLY</string>
+    <string name="mode_all_notifications" translatable="false">MODE_ALL_NOTIFICATIONS</string>
+    <string name="mode_vibrate" translatable="false">MODE_VIBRATE</string>
+    <string name="mode_ring" translatable="false">MODE_RING</string>
+
 </resources>

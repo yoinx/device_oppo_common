@@ -26,6 +26,8 @@ import android.preference.SwitchPreference;
 import com.slim.device.KernelControl;
 import com.slim.device.R;
 import com.slim.device.util.FileUtils;
+import com.slim.device.util.SliderUtils;
+import com.slim.device.KeyHandler;
 
 public class SliderSettings extends PreferenceActivity
         implements OnPreferenceChangeListener {
@@ -37,6 +39,7 @@ public class SliderSettings extends PreferenceActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         addPreferencesFromResource(R.xml.slider_panel);
 
         mSliderTop = (ListPreference) findPreference("keycode_top_position");
@@ -49,29 +52,23 @@ public class SliderSettings extends PreferenceActivity
         mSliderBottom.setOnPreferenceChangeListener(this);
     }
 
-    private void setSummary(ListPreference preference, String file) {
-        String keyCode;
-        if ((keyCode = FileUtils.readOneLine(file)) != null) {
-            preference.setValue(keyCode);
-            preference.setSummary(preference.getEntry());
-        }
+    private void setSummary(ListPreference preference, String value) {
+            preference.setSummary(value);
     }
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         final String file;
         if (preference == mSliderTop) {
-            file = KernelControl.KEYCODE_SLIDER_TOP;
+            SliderUtils.setSliderAction(SliderUtils.SLIDER_TOP, (String) newValue);
         } else if (preference == mSliderMiddle) {
-            file = KernelControl.KEYCODE_SLIDER_MIDDLE;
+            SliderUtils.setSliderAction(SliderUtils.SLIDER_MIDDLE, (String) newValue);
         } else if (preference == mSliderBottom) {
-            file = KernelControl.KEYCODE_SLIDER_BOTTOM;
+            SliderUtils.setSliderAction(SliderUtils.SLIDER_BOTTOM, (String) newValue);
         } else {
             return false;
         }
-
-        FileUtils.writeLine(file, (String) newValue);
-        setSummary((ListPreference) preference, file);
+        setSummary((ListPreference) preference, (String) newValue);
 
         return true;
     }
@@ -79,12 +76,11 @@ public class SliderSettings extends PreferenceActivity
     @Override
     protected void onResume() {
         super.onResume();
-
         // Remove padding around the listview
             getListView().setPadding(0, 0, 0, 0);
 
-        setSummary(mSliderTop, KernelControl.KEYCODE_SLIDER_TOP);
-        setSummary(mSliderMiddle, KernelControl.KEYCODE_SLIDER_MIDDLE);
-        setSummary(mSliderBottom, KernelControl.KEYCODE_SLIDER_BOTTOM);
+        setSummary(mSliderTop, SliderUtils.getSliderAction(SliderUtils.SLIDER_TOP));
+        setSummary(mSliderMiddle, SliderUtils.getSliderAction(SliderUtils.SLIDER_MIDDLE));
+        setSummary(mSliderBottom, SliderUtils.getSliderAction(SliderUtils.SLIDER_BOTTOM));
     }
 }
